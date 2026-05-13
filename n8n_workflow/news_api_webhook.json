@@ -1,0 +1,94 @@
+{
+  "name": "news_api_webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "articles",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "70f5877b-d7c6-49b5-ac82-d7990a5ae474",
+      "name": "Webhook",
+      "webhookId": "cc9c8640-90df-45cd-877a-b19b1b3ca5cc"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT *\nFROM articles\nORDER BY published_date DESC\nLIMIT 50;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "eda48233-0cbb-4743-805c-253861b20671",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "O1v2pQ26T55QjF9A",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $input.all().map(item => item.json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "07596ef7-5c66-454b-a87f-db69a56d88ba",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5aaf260f-0109-49fc-af54-54eed3bab8a6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8ddb7ae386cd4de04ab5c24f939d657e19d5ccf8d66c69a4e01d6d6c4e9ab012"
+  },
+  "id": "74nycYcnnhZRDXKU",
+  "tags": []
+}

@@ -1,0 +1,492 @@
+{
+  "name": "AI News Pipeline",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        -1408
+      ],
+      "id": "3075a145-938e-4250-987e-d31bad8d4099",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM articles;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1760,
+        -1216
+      ],
+      "id": "bbae20f7-f5f6-45a0-a7c1-8fb222d05fd7",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "O1v2pQ26T55QjF9A",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://newsdata.io/api/1/news",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "=your_newsdata_key"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            },
+            {
+              "name": "category",
+              "value": "technology,business,science"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1760,
+        -1408
+      ],
+      "id": "5a1968ba-b2cb-4dbd-b905-62193811f4ff",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        -1408
+      ],
+      "id": "beaf03f0-d169-40ba-a729-fdfbcdea1490",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f052c0dd-a53d-4b0e-a0f4-5079e024899e",
+              "leftValue": "={{$json[\"title\"]}}",
+              "rightValue": false,
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "4112e9bc-b10b-44bd-abe2-3bd839648a20",
+              "leftValue": "={{$json[\"description\"]}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -1312,
+        -1408
+      ],
+      "id": "43f95f53-63e1-41d7-b92d-f8741f279321",
+      "name": "Filter"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        -1408
+      ],
+      "id": "b54474a5-8628-4c30-ab34-a3a9ae84402b",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const content = $json.text;\n\nconst parsed = JSON.parse(content);\n\nconst original = $('Limit').item.json;\n\nreturn {\n  json: {\n    title: original.title,\n    description: original.description,\n    article_url: original.link,\n\n    source: original.source_id,\n    category: original.category?.[0],\n    published_date: new Date(\n  original.pubDate.replace(\" \", \"T\") + \"Z\"\n).toISOString(),\n    summary: parsed.summary,\n    sentiment: parsed.sentiment,\n    insights: parsed.insights.join(\" • \")\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        -1408
+      ],
+      "id": "eb365b50-470d-4eab-909f-f0bbfb96c3e1",
+      "name": "Code in JavaScript",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an advanced AI News Intelligence Analyst.\n\nAnalyze the news article carefully and return ONLY valid JSON.\n\nYour response must be professional, concise, and insightful.\n\nRules:\n- Summary should be 4-6 meaningful sentences.\n- Explain the core event clearly.\n- Mention business, technology, economic, or social impact if relevant.\n- Sentiment must be only:\n  Positive\n  Neutral\n  Negative\n- Insights must contain 3-5 high quality insights.\n- Insights should be analytical, not generic.\n- Do not repeat the summary.\n- Avoid vague statements like:\n  \"This is important\"\n  \"Technology is evolving\"\n\nReturn ONLY this JSON format:\n\n{\n  \"summary\": \"...\",\n  \"sentiment\": \"Positive/Neutral/Negative\",\n  \"insights\": [\n    \"...\",\n    \"...\",\n    \"...\"\n  ]\n}\n\nNews Article:\n\nTitle:\n{{ $json.title }}\n\nDescription:\n{{ $json.description }}",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -864,
+        -1408
+      ],
+      "id": "10bcbd0e-ddfc-412a-aa3c-04c1d178b243",
+      "name": "Basic LLM Chain",
+      "notes": "=Analyze this news article and return ONLY valid JSON.\n\nFormat:\n{\n  \"summary\": \"...\",\n  \"sentiment\": \"positive/neutral/negative\",\n  \"insights\": [\n    \"...\",\n    \"...\",\n    \"...\"\n  ]\n}\n\nTitle: {{$json.title}}\n\nDescription: {{$json.description}}"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        -1184
+      ],
+      "id": "6fcd4f8b-5033-40a7-a97f-d44f5d189580",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "9CnmyFSMYYufCI2X",
+          "name": "Groq account"
+        }
+      },
+      "notes": "=Analyze this news article and return ONLY valid JSON.\n\nFormat:\n{\n  \"summary\": \"...\",\n  \"sentiment\": \"positive/neutral/negative\",\n  \"insights\": [\n    \"...\",\n    \"...\",\n    \"...\"\n  ]\n}\n\nTitle: {{$json.title}}\n\nDescription: {{$json.description}}"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "articles",
+          "mode": "list",
+          "cachedResultName": "articles"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": 0,
+            "title": "={{$json.title}}",
+            "description": "={{$json.description}}",
+            "article_url": "={{$json.article_url}}",
+            "summary": "={{$json.summary}}",
+            "sentiment": "={{$json.sentiment}}",
+            "insights": "={{$json.insights}}",
+            "source": "={{$json.source}}",
+            "category": "={{$json.category}}",
+            "published_date": "={{$json.published_date}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "article_url",
+              "displayName": "article_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment",
+              "displayName": "sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "insights",
+              "displayName": "insights",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "published_date",
+              "displayName": "published_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -288,
+        -1408
+      ],
+      "id": "e54ecf61-e2b4-4cd8-82eb-522bbe28e7ea",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "O1v2pQ26T55QjF9A",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1984,
+        -1120
+      ],
+      "id": "d89f33e6-367f-4731-9ae9-9bdd4e4135b9",
+      "name": "Schedule Trigger",
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fd815e55-1365-472b-b4d5-8c26365e68cf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8ddb7ae386cd4de04ab5c24f939d657e19d5ccf8d66c69a4e01d6d6c4e9ab012"
+  },
+  "id": "SwtDlTljV6b7BFxp",
+  "tags": []
+}
