@@ -1,0 +1,22 @@
+[
+  {
+    "title": "AI Revolution in Healthcare",
+    "summary": "Artificial Intelligence is transforming diagnostics and patient care.",
+    "source": "Tech News",
+    "category": "technology",
+    "published_date": "2026-05-14T10:00:00Z",
+    "sentiment": "Positive",
+    "insights": "• Faster diagnosis • Improved efficiency • Better patient outcomes",
+    "link": "https://example.com/article1"
+  },
+  {
+    "title": "Global Markets Update",
+    "summary": "Stock markets showed mixed trends amid economic uncertainty.",
+    "source": "Business Daily",
+    "category": "business",
+    "published_date": "2026-05-14T08:30:00Z",
+    "sentiment": "Neutral",
+    "insights": "• Inflation concerns • Investor caution • Banking sector stable",
+    "link": "https://example.com/article2"
+  }
+]

@@ -16,7 +16,7 @@ function App() {
   useEffect(() => {
 
     axios.get(
-      "https://kumar677madan.app.n8n.cloud/webhook/articles",
+        "/articles.json",     
       {
         timeout: 30000
       }
