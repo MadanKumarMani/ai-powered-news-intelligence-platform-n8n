@@ -16,7 +16,7 @@ function App() {
   useEffect(() => {
 
     axios.get(
-        "/articles.json",     
+        "https://n8n-render-deployment-1.onrender.com/webhook/articles",     
       {
         timeout: 30000
       }
