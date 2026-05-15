@@ -16,9 +16,18 @@ function App() {
   useEffect(() => {
 
     axios.get(
-        "https://calcium-headlamp-gaining.ngrok-free.dev/webhook/articles",     
+        "https://calcium-headlamp-gaining.ngrok-free.dev/webhook/articles",  
+        
+        
+        
       {
-        timeout: 30000
+        timeout: 30000,
+
+         headers: {
+      "ngrok-skip-browser-warning": "true"
+    }
+
+
       }
     )
 
