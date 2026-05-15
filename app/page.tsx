@@ -16,7 +16,7 @@ function App() {
   useEffect(() => {
 
     axios.get(
-        "https://n8n-render-deployment-1.onrender.com/webhook/articles",     
+        "https://calcium-headlamp-gaining.ngrok-free.dev/webhook/articles",     
       {
         timeout: 30000
       }
