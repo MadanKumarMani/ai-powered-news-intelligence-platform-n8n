@@ -16,7 +16,7 @@ function App() {
   useEffect(() => {
 
     axios.get(
-        "http://92.4.81.39:5678/webhook/articles",  
+        "https://madanlabs.duckdns.org/webhook/articles",  
         
         
         
